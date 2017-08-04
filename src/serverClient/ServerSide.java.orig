@@ -58,6 +58,7 @@ public class ServerSide extends PApplet{
 			engine.text("Server side specator",250,50);
 		}
 	}
+	
 	public void displayPattern() {
 		
 	}
@@ -140,6 +141,10 @@ public class ServerSide extends PApplet{
 		return inBytes[4];
 	}
 	
+<<<<<<< HEAD
+	public static int getPos( String xOry ) {
+		
+=======
 	public static int getCord( char cord, byte[] inBytes ) {
 		if( cord == 'x' ) {
 			ByteBuffer xVal = ByteBuffer.allocate(2);
@@ -156,6 +161,7 @@ public class ServerSide extends PApplet{
 		} else {
 			return 0;
 		}
+>>>>>>> d43f61db88cf118eff621055d3def48976047b9b
 	}
 	
 	public static boolean[][] bytesToBool( byte[] inBytes ) {
