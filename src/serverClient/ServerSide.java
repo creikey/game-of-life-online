@@ -54,7 +54,7 @@ public class ServerSide extends PApplet{
 			//Drawing the pixels
 			drawPixels();
 			//Drawing the UI
-			fill(255);
+			engine.fill(255);
 			engine.text("Server side specator",250,50);
 		}
 	}
