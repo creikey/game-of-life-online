@@ -59,6 +59,10 @@ public class ServerSide extends PApplet{
 		}
 	}
 	
+	public void displayPattern() {
+		
+	}
+	
 	public void initPixels() {
 		serverPixels = new Pixel[pixelHeight][pixelLength];
 		for( int r = 0; r < pixelHeight; r++ ) {
@@ -135,6 +139,10 @@ public class ServerSide extends PApplet{
 	
 	public static int getColorByte( byte[] inBytes ) {
 		return inBytes[4];
+	}
+	
+	public static int getPos( String xOry ) {
+		
 	}
 	
 	public static boolean[][] bytesToBool( byte[] inBytes ) {

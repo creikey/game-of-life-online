@@ -27,6 +27,7 @@ public class ClientSide extends PApplet{
 		} else {
 			if( written == false ) {
 				myClient.write(boolToBytes(offPattern, 1));
+				written = true;
 			}
 		}
 		
