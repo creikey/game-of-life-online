@@ -11,6 +11,7 @@ public class ClientSide extends PApplet{
 	int port = 5204;
 	Client myClient;
 	boolean[][] patternDraw;
+	boolean written = false;
 	boolean[][] offPattern = new boolean[50][50];
 	byte[] patternBuffer;
 
@@ -24,7 +25,9 @@ public class ClientSide extends PApplet{
 			myClient = new Client(this, ip, port);
 			clientStatus = "Not so good...";
 		} else {
-			myClient.write(boolToBytes(offPattern, 1));
+			if( written == false ) {
+				myClient.write(boolToBytes(offPattern, 1));
+			}
 		}
 		
 		engine.text("Client side connection status: " + clientStatus, 250, 30);
