@@ -1,0 +1,9 @@
+Lookup for data structures that can be send by the client to the server
+
+Hello world - 
+
+First byte -- The client address
+Second byte -- (byte)-128
+Third byte -- (byte)-1
+
+Means hello world
