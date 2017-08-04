@@ -137,6 +137,24 @@ public class ServerSide extends PApplet{
 		return inBytes[4];
 	}
 	
+	public static int getCord( char cord, byte[] inBytes ) {
+		if( cord == 'x' ) {
+			ByteBuffer xVal = ByteBuffer.allocate(2);
+			xVal.order(ByteOrder.LITTLE_ENDIAN);
+			xVal.put(inBytes[5]);
+			xVal.put(inBytes[6]);
+			return (int)xVal.getShort(0);
+		} else if( cord == 'y' ) {
+			ByteBuffer yVal = ByteBuffer.allocate(2);
+			yVal.order(ByteOrder.LITTLE_ENDIAN);
+			yVal.put(inBytes[5]);
+			yVal.put(inBytes[6]);
+			return (int)yVal.getShort(0);
+		} else {
+			return 0;
+		}
+	}
+	
 	public static boolean[][] bytesToBool( byte[] inBytes ) {
 		boolean[][] returnBool; //Declare the two dimensional return array
 		
@@ -175,10 +193,10 @@ public class ServerSide extends PApplet{
 		return returnBool;
 	}
 	
-	public static byte[] boolToBytes( boolean[][] inBool, int colorVal ) {
+	public static byte[] boolToBytes( boolean[][] inBool, int colorVal, short xCord, short yCord ) {
 		byte[] returnBytes; //The bytearay to be returned
 		int totalBytes; //Amount of bytes needed, initializer
-		totalBytes = 5; //Amount needed for rows and columns count plus color
+		totalBytes = 9; //Amount needed for rows and columns count plus color
 		totalBytes += ( Math.ceil( (double)( inBool.length*inBool[0].length ) / 8) ) ; //Amount needed for the rows and columns
 		returnBytes = new byte[totalBytes]; //Initialize the return bytes
 		//Next section prepends the bits for the two shorts
@@ -186,12 +204,16 @@ public class ServerSide extends PApplet{
 		short rows;
 		columns = (short) inBool[0].length;
 		rows = (short) inBool.length; //Get the shorts
-		returnBytes[0] = (byte) (columns);
+		returnBytes[0] = (byte) (columns); //The Columns
 		returnBytes[1] = (byte) (columns >> 8);
-		returnBytes[2] = (byte) (rows);
+		returnBytes[2] = (byte) (rows); //The Rows
 		returnBytes[3] = (byte) (rows >> 8);
-		returnBytes[4] = (byte) colorVal;
-		int i = 5; //Counter for the byte currently being used
+		returnBytes[4] = (byte) colorVal; //The Color
+		returnBytes[5] = (byte) (xCord); //The X coordinate
+		returnBytes[6] = (byte) (xCord >> 8);
+		returnBytes[7] = (byte) (yCord); //The Y coordinate
+		returnBytes[8] = (byte) (yCord >> 8);
+		int i = 9; //Counter for the byte currently being used
 		int b = 7; //Counter for the left shift bit counter to insert bits;
 		int r; //Declaring rows iterator
 		int c; //Declaring columns iterator
