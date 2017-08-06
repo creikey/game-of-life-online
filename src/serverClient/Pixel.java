@@ -3,8 +3,8 @@ package serverClient;
 import processing.core.PApplet;
 
 public class Pixel {
-	int x = 0;
-	int y = 0;
+	float x;
+	float y;
 	PApplet engine;
 	int state = 0;
 	int  bufferState = 0;
@@ -14,7 +14,7 @@ public class Pixel {
 		x = toX;
 		y = toY;
 	}
-	
+
 	public void changeState(int toState) {
 		if( toState > 10 || toState < 0 ) {
 			state = 0;
@@ -35,6 +35,9 @@ public class Pixel {
 		} else if( friends == 3 && state == 0 ) {
 			bufferState = toState;
 		}
+		/*if( bufferState == 1 ) {
+			System.out.println("For pixel at " + x + ", " + y + ", I have " + friends + " friends, and my state is " + bufferState);
+		}*/
 	}
 	
 	public void update() {

@@ -15,8 +15,7 @@ public class ServerSide extends PApplet{
 	
 	boolean clientConnected = false;
 	boolean newData = false;
-	boolean[][] patternDraw = new boolean[50][50];
-	byte[] patternBuffer = new byte[318];
+	byte[] patternBuffer = new byte[323];
 	int colorDraw = 1;
 	int port = 5204;
 	Server myServer;
@@ -44,9 +43,16 @@ public class ServerSide extends PApplet{
 				clientConnected = true;
 			}
 		} else {
-			if( newData = true) {
+			Client currentClient = myServer.available();
+			if( newData == true) {
 				myServer.write(patternBuffer);
+				System.out.println("New Data?!");
+				displayPattern( bytesToBool(patternBuffer), getCord( 'x', patternBuffer), getCord( 'y', patternBuffer ), getColorByte(patternBuffer) );
 				newData = false;
+			} else if( currentClient != null && currentClient.available() > 0 ) {
+				System.out.println("Receiving data from a client...");
+				currentClient.readBytes(patternBuffer);
+				newData = true;
 			}
 			engine.background(0);
 			//Buffering the pixels
@@ -55,11 +61,38 @@ public class ServerSide extends PApplet{
 			drawPixels();
 			//Drawing the UI
 			engine.fill(255);
-			engine.text("Server side specator",250,50);
+			engine.text("Server side spectator",250,50);
 		}
 	}
-	public void displayPattern() {
+	
+	public static boolean[][] toRandBool(int sizex, int sizey) { //TODO delete this once done
+		boolean returnBool[][] = new boolean[sizey][sizex];
 		
+		for(int i = 0; i < returnBool.length; i++) {
+			for( int x = 0; x < returnBool[0].length; x++ ) {
+				returnBool[i][x] = Math.random() < 0.5;
+			}
+		}
+		
+		return returnBool;
+	}
+
+	public void displayPattern( boolean[][] pattern, int xPos, int yPos, int status ) { //Draws a pattern on the server grid
+		System.out.println("Drawing pattern at " + xPos + ", " + yPos );
+		for( int r = 0; r < pattern.length; r++ ) {
+			for( int c = 0; c < pattern[0].length; c++ ) {
+				try {
+					if( pattern[r][c] == true ) {
+						serverPixels[r+yPos][c+xPos].changeState( status ); //If the pattern's true, make it so with status
+						//System.out.println(" Pixel status at " + (xPos+c) + ", " + (yPos+r) + ": " + serverPixels[r+yPos][c+xPos].getState());
+					} else {
+						serverPixels[r+yPos][c+xPos].changeState(0); //Else, turn the pixel off
+					}
+				} catch( java.lang.ArrayIndexOutOfBoundsException e ) {
+					System.out.println("Pattern is too big...");
+				}
+			}
+		}
 	}
 	
 	public void initPixels() {
@@ -72,6 +105,7 @@ public class ServerSide extends PApplet{
 	}
 	
 	public void drawPixels() {
+		engine.noStroke();
 		for( int r = 0; r < serverPixels.length; r++ ) {
 			for( int c = 0; c < serverPixels[0].length; c++ ) {
 				serverPixels[r][c].update();
@@ -90,10 +124,13 @@ public class ServerSide extends PApplet{
 						if(neighbors[rN][cN].getState() > 0) {
 							toFriends += 1;
 						}
-						toColor[neighbors[rN][cN].getState()] += 1;
+						if( neighbors[rN][cN].getState() != 0 ) {
+							toColor[neighbors[rN][cN].getState()] += 1;
+						}
 					}
 				}
 				serverPixels[r][c].buffer( toFriends, getIndexHighest(toColor) );
+				neighbors = new Pixel[3][3];
 				toFriends = 0;
 				toColor = new int[11];
 			}
@@ -122,7 +159,7 @@ public class ServerSide extends PApplet{
 		try {
 			returnPixels = new Pixel[][] {
 				{ inPixels[posY-1][posX-1], inPixels[posY-1][posX], inPixels[posY-1][posX+1] },
-				{ inPixels[posY][posX-1], inPixels[posY][posX], inPixels[posY][posX+1] },
+				{ inPixels[posY][posX-1], deadPixel, inPixels[posY][posX+1] },
 				{ inPixels[posY+1][posX-1], inPixels[posY+1][posX], inPixels[posY+1][posX+1]}
 			};
 		}
@@ -158,49 +195,11 @@ public class ServerSide extends PApplet{
 		}
 	}
 	
-	public static boolean[][] bytesToBool( byte[] inBytes ) {
-		boolean[][] returnBool; //Declare the two dimensional return array
-		
-		ByteBuffer rows = ByteBuffer.allocate(2); //Gets the rows and columns from the byteArray
-		ByteBuffer columns = ByteBuffer.allocate(2);
-		rows.order(ByteOrder.LITTLE_ENDIAN);
-		rows.put(inBytes[2]);
-		rows.put(inBytes[3]);
-		columns.order(ByteOrder.LITTLE_ENDIAN);
-		columns.put(inBytes[0]);
-		columns.put(inBytes[1]);
-		short toRows = rows.getShort(0);
-		short toColumns = columns.getShort(0);
-		System.out.println("Rows: " + toRows + ", Columns: " + toColumns);
-		returnBool = new boolean[toRows][toColumns];
-		
-		int i = 5;
-		int b = 7;
-		
-		for( int r = 0; r < returnBool.length; r++ ) { //Iterate through the rows and columns of the return boolean[][]
-			for( int c = 0; c < returnBool[0].length; c++ ) {
-				boolean toGet; //The boolean that it's going to set
-				int numb; //The bit that it's looking at
-				numb = (inBytes[i] >> b) & 1; //Get the first bit
-				toGet = 0.5 < numb; //Convert numb to a boolean
-				returnBool[r][c] = toGet; //Set the boolean in returnBool
-				if( b > 0 ) { //Resets the bit counter if on the next byte
-					b -= 1;
-				} else {
-					b = 7;
-					i += 1;
-				}
-			}
-		}
-		
-		return returnBool;
-	}
-	
 	public static byte[] boolToBytes( boolean[][] inBool, int colorVal, short xCord, short yCord ) {
 		byte[] returnBytes; //The bytearay to be returned
 		int totalBytes; //Amount of bytes needed, initializer
 		totalBytes = 9; //Amount needed for rows and columns count plus color
-		totalBytes += ( Math.ceil( (double)( inBool.length*inBool[0].length ) / 8) ) ; //Amount needed for the rows and columns
+		totalBytes += ( Math.ceil( (double)( inBool.length*inBool[0].length ) / 8)+1) ; //Amount needed for the rows and columns
 		returnBytes = new byte[totalBytes]; //Initialize the return bytes
 		//Next section prepends the bits for the two shorts
 		short columns;
@@ -240,6 +239,49 @@ public class ServerSide extends PApplet{
 		}
 		
 		return returnBytes;
+	}
+	
+	public static boolean[][] bytesToBool( byte[] inBytes ) {
+		boolean[][] returnBool; //Declare the two dimensional return array
+		
+		ByteBuffer rows = ByteBuffer.allocate(2); //Gets the rows and columns from the byteArray
+		ByteBuffer columns = ByteBuffer.allocate(2);
+		rows.order(ByteOrder.LITTLE_ENDIAN);
+		rows.put(inBytes[2]);
+		rows.put(inBytes[3]);
+		columns.order(ByteOrder.LITTLE_ENDIAN);
+		columns.put(inBytes[0]);
+		columns.put(inBytes[1]);
+		short toRows = rows.getShort(0);
+		short toColumns = columns.getShort(0);
+		System.out.println("Rows: " + toRows + ", Columns: " + toColumns);
+		returnBool = new boolean[toRows][toColumns];
+		
+		int i = 9;
+		int b = 7;
+		
+		for( int r = 0; r < returnBool.length; r++ ) { //Iterate through the rows and columns of the return boolean[][]
+			for( int c = 0; c < returnBool[0].length; c++ ) {
+				boolean toGet; //The boolean that it's going to set
+				int numb; //The bit that it's looking at
+				System.out.println("On row " + r + " and column " + c);
+				numb = (inBytes[i] >> b) & 1; //Get the first bit
+				toGet = 0.5 < numb; //Convert numb to a boolean
+				returnBool[r][c] = toGet; //Set the boolean in returnBool
+				if( b > 0 ) { //Resets the bit counter if on the next byte
+					b -= 1;
+				} else {
+					b = 7;
+					if( i < inBytes.length ) {
+						i += 1;
+					} else {
+						System.out.println("I is too big for the bytearray");
+					}
+				}
+			}
+		}
+		
+		return returnBool;
 	}
 	
 }
